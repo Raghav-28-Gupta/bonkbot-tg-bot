@@ -173,7 +173,8 @@ export class CommandHandlers {
 				`🔥 This message will be deleted in 60 seconds`,
                { parse_mode: "Markdown" }     
 		);
-
+          
+          // Delete the message containing the private key
 		setTimeout(() => {
 			ctx.deleteMessage(msg.message_id).catch(() => {});
 		}, config.privateKeyDeleteTimeout);
