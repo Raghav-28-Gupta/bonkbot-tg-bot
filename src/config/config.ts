@@ -10,10 +10,10 @@ export const config = {
 	rpcUrl: process.env.SOLANA_RPC_URL || "https://api.devnet-beta.solana.com",
 	network: process.env.SOLANA_NETWORK || "devnet-beta",
 
-	// Jupiter
-	jupiterQuoteApi: process.env.JUPITER_QUOTE_API || "https://lite-api.jup.ag/swap/v1/quote",
-	jupiterSwapApi: process.env.JUPITER_SWAP_API || "https://lite-api.jup.ag/swap/v1/swap",
-	jupiterPriceApi: process.env.JUPITER_PRICE_API || "https://lite-api.jup.ag/price/v3",
+	// Jupiter - Using v6 API for better ALT support on devnet
+	jupiterQuoteApi: process.env.JUPITER_QUOTE_API || "https://quote-api.jup.ag/v6/quote",
+	jupiterSwapApi: process.env.JUPITER_SWAP_API || "https://quote-api.jup.ag/v6/swap",
+	jupiterPriceApi: process.env.JUPITER_PRICE_API || "https://price.jup.ag/v6/price",
 
 	// Bot Settings
 	defaultSlippage: parseFloat(process.env.DEFAULT_SLIPPAGE || "1.0"),

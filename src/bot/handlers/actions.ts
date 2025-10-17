@@ -17,24 +17,30 @@ export class ActionHandlers {
 	) {}
 
 	async handleSwapInputToken(ctx: BotContext): Promise<void> {
-          // @ts-ignore
+		// @ts-ignore
 		const tokenSymbol = ctx.match![1];
+		logger.debug("Input token selected:", tokenSymbol);
+		
 		ctx.session = ctx.session || {};
 		ctx.session.inputToken = tokenSymbol;
 		ctx.session.swapStep = "output_token";
 
+		await ctx.answerCbQuery();
 		await ctx.editMessageText(
 			`✅ You will swap: ${tokenSymbol}\n\n🔄 Select output token (what you want to receive):`,
 			{
 				parse_mode: "Markdown",
-				...tokenSelectionKeyboard("output"),    // cleanly add the inline_keyboard property
+				...tokenSelectionKeyboard("output"),
 			}
 		);
 	}
 
 	async handleSwapOutputToken(ctx: BotContext): Promise<void> {
-          // @ts-ignore
+		// @ts-ignore
 		const tokenSymbol = ctx.match![1];
+		logger.debug("Output token selected:", tokenSymbol);
+		logger.debug("Current session:", ctx.session);
+		
 		ctx.session = ctx.session || {};
 
 		if (ctx.session.inputToken === tokenSymbol) {
@@ -45,6 +51,7 @@ export class ActionHandlers {
 		ctx.session.outputToken = tokenSymbol;
 		ctx.session.swapStep = "amount";
 
+		await ctx.answerCbQuery();
 		await ctx.editMessageText(
 			`✅ Swap Route: ${ctx.session.inputToken} → ${tokenSymbol}\n\n` +
 				`💵 Enter amount of ${ctx.session.inputToken} to swap:`,

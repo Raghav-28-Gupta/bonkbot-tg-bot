@@ -1,4 +1,4 @@
-import { Telegraf } from "telegraf";
+import { Telegraf, session } from "telegraf";
 import type { BotContext } from "../types";
 import { DataStore } from "../store/data-store";
 import { SolanaService } from "../services/solana.service";
@@ -20,6 +20,10 @@ export class SolSwapBot {
 
 	constructor() {
 		this.bot = new Telegraf<BotContext>(config.botToken);
+		
+		// Add session middleware
+		this.bot.use(session());
+		
 		this.store = new DataStore();
 		this.solanaService = new SolanaService();
 		this.jupiterService = new JupiterService(

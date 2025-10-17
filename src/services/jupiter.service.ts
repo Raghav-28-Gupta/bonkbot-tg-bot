@@ -26,6 +26,8 @@ export class JupiterService {
 				outputMint,
 				amount: amount.toString(),
 				slippageBps: Math.floor(slippage * 100).toString(),
+				asLegacyTransaction: "false", // Request versioned transaction
+				only: "direct,route", // Use direct routes to avoid ALT issues on devnet
 			});
 
 			const response = await fetch(`${config.jupiterQuoteApi}?${params}`);
@@ -36,8 +38,7 @@ export class JupiterService {
 				return null;
 			}
                
-               // @ts-ignore
-			return await response.json();
+			return await response.json() as JupiterQuote;
 		} catch (error) {
 			logger.error("Error fetching quote:", error);
 			return null;
@@ -65,24 +66,33 @@ export class JupiterService {
 			});
 
 			if (!swapResponse.ok) {
-				throw new Error(`Swap API error: ${await swapResponse.text()}`);
+				const errorText = await swapResponse.text();
+				logger.error("Swap API error:", errorText);
+				throw new Error(`Swap API error: ${errorText}`);
 			}
                
-               // @ts-ignore
-			const { swapTransaction }: JupiterSwapResponse = await swapResponse.json();
+			const responseData = await swapResponse.json() as JupiterSwapResponse;
+			const { swapTransaction } = responseData;
+			
 			const swapTransactionBuf = Buffer.from(swapTransaction, "base64");
 			const transaction = VersionedTransaction.deserialize(swapTransactionBuf);
 
 			transaction.sign([keypair]);
 
-			const signature = await this.connection.sendTransaction(transaction,
-				{
-                       skipPreflight: false,
-                       maxRetries: 3,
-				}
-			);
+			// Use sendRawTransaction instead of sendTransaction for better ALT handling
+			const signature = await this.connection.sendRawTransaction(transaction.serialize(), {
+				skipPreflight: true, // Skip preflight for ALT issues
+				maxRetries: 3,
+			});
 
-			await this.connection.confirmTransaction(signature, "confirmed");
+			logger.info("Transaction sent, signature:", signature);
+
+			// Wait for confirmation
+			const confirmation = await this.connection.confirmTransaction(signature, "confirmed");
+			
+			if (confirmation.value.err) {
+				throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
+			}
 
 			return signature;
 		} catch (error) {
