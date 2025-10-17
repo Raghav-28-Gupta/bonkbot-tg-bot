@@ -94,11 +94,29 @@ export class JupiterService {
 	async getTokenPrice(mintAddress: string): Promise<number> {
 		try {
 			const response = await fetch(`${config.jupiterPriceApi}?ids=${mintAddress}`);
-			if (!response.ok) return 0;
+			if (!response.ok) {
+				logger.error(`Price API error: ${response.status} ${response.statusText}`);
+				return 0;
+			}
                
-               // @ts-ignore
-			const data: JupiterPriceResponse = await response.json();
-			return data.data[mintAddress]?.price || 0;
+			const data: any = await response.json();
+			logger.debug("Price API response:", data);
+
+			// Checking if data has the expected structure
+			if (!data || typeof data !== 'object') {
+				logger.error("Invalid price API response structure");
+				return 0;
+			}
+
+			// Handling different possible response formats
+			if (data.data && typeof data.data === 'object') {
+				return data.data[mintAddress]?.price || 0;
+			} else if (data[mintAddress]) {
+				return data[mintAddress].price || 0;
+			} else {
+				logger.warn(`Price not found for mint: ${mintAddress}`);
+				return 0;
+			}
 		} catch (error) {
 			logger.error("Price fetch error:", error);
 			return 0;
