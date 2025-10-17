@@ -108,11 +108,9 @@ export class JupiterService {
 				return 0;
 			}
 
-			// Handling different possible response formats
-			if (data.data && typeof data.data === 'object') {
-				return data.data[mintAddress]?.price || 0;
-			} else if (data[mintAddress]) {
-				return data[mintAddress].price || 0;
+			// Handle Jupiter API response format: data[mintAddress].usdPrice
+			if (data[mintAddress] && typeof data[mintAddress] === 'object') {
+				return data[mintAddress].usdPrice || 0;
 			} else {
 				logger.warn(`Price not found for mint: ${mintAddress}`);
 				return 0;
