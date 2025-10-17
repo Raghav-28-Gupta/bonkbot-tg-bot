@@ -1,5 +1,7 @@
 {
-  "name": "week-9-tg-bonkbot",
+  "name": "solswap-telegram-bot",
+  "version": "1.0.0",
+  "license": "MIT",
   "module": "index.ts",
   "type": "module",
   "private": true,
