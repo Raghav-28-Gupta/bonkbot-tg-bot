@@ -1,77 +1,217 @@
-# SolSwap Telegram Bot
+# 🤖 SolSwap Telegram Bot
 
-A production-ready Telegram bot for swapping tokens on Solana using Jupiter Aggregator.
+<div align="center">
 
-## Features
+![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Bun](https://img.shields.io/badge/runtime-Bun-FFDB1E.svg)
+![Solana](https://img.shields.io/badge/blockchain-Solana-00FFBD.svg)
 
-- ✅ Non-custodial wallet management
-- ✅ Token swaps via Jupiter API V1
-- ✅ Real-time price feeds
-- ✅ Balance checking
-- ✅ Configurable slippage
-- ✅ TypeScript + Bun
+A professional, non-custodial Telegram bot for seamless token swapping on Solana using Jupiter Aggregator.
 
-## Setup
+[Features](#features) • [Installation](#installation) • [Usage](#usage) • [Architecture](#architecture) • [Security](#security)
 
-1. Install dependencies:
+</div>
 
-2. Copy `.env.example` to `.env` and configure:
+## ✨ Features
 
-3. Get your Telegram bot token from [@BotFather](https://t.me/BotFather)
+| Category | Features |
+|----------|----------|
+| **🔐 Wallet Management** | Non-custodial wallets, In-memory key storage, Secure key export |
+| **💱 Trading** | Jupiter DEX aggregation, Real-time price feeds, Configurable slippage, Multi-token support |
+| **🛡️ Security** | Auto-delete sensitive messages, No persistent storage, Secure key handling |
+| **👨‍💻 User Experience** | Intuitive Telegram interface, Balance checking, Price monitoring, Quick swaps |
 
-4. Update `.env` with your token: TELEGRAM_BOT_TOKEN=your_token_here
+## 🚀 Quick Start
 
-## Development
+### Prerequisites
 
-bun run dev
+- [Bun](https://bun.sh) runtime (v1.0.0 or higher)
+- Telegram Bot Token from [@BotFather](https://t.me/BotFather)
 
-## Production
+### Installation
 
-bun run build
-bun run start
-
-## Commands
-
-- `/start` - Initialize wallet
-- `/balance` - Check balances
-- `/swap` - Swap tokens
-- `/prices` - View prices
-- `/settings` - Configure slippage
-- `/export` - Export private key
-
-## Architecture
-
-- **src/bot/** - Bot logic and handlers
-- **src/services/** - Jupiter and Solana services
-- **src/store/** - User data management
-- **src/config/** - Configuration
-- **src/utils/** - Utilities
-
-## Security
-
-- Private keys stored in-memory (not persisted)
-- Export messages auto-delete after 60s
-- Non-custodial architecture
-
-## License
-
-MIT
+```bash
+# Clone the repository
+git clone https://github.com/your-org/solswap-telegram-bot
+cd solswap-telegram-bot
 
 # Install dependencies
 bun install
 
-# Create .env file
+# Configure environment
 cp .env.example .env
 
-# Edit .env with your bot token
+# Edit configuration
 nano .env
+```
 
-# Run in development mode
+### Environment Configuration
+
+```env
+# Required
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
+
+# Optional (with defaults)
+SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
+JUPITER_API_URL=https://quote-api.jup.ag/v6
+DEFAULT_SLIPPAGE=1.0
+```
+
+## 🎯 Usage
+
+### Development
+
+```bash
+# Run in development mode with hot reload
 bun run dev
+```
 
-# Build for production
+### Production
+
+```bash
+# Build the project
 bun run build
 
-# Run in production
+# Start production server
 bun run start
+```
+
+## 🤖 Bot Commands
+
+| Command | Description | Usage |
+|---------|-------------|-------|
+| `/start` | Initialize your wallet | `/start` |
+| `/balance` | Check token balances | `/balance` |
+| `/swap` | Execute token swap | `/swap <amount> <from_token> <to_token>` |
+| `/prices` | View real-time prices | `/prices SOL USDC` |
+| `/settings` | Configure trading settings | `/settings slippage 0.5` |
+| `/export` | Export private key (auto-deletes) | `/export` |
+
+### Example Swap
+
+```bash
+/swap 1 SOL USDC
+# Swaps 1 SOL to USDC with current market rates
+```
+
+## 🏗 Architecture
+
+```
+src/
+├── bot/           # Telegram bot handlers
+│   ├── commands/  # Slash command implementations
+│   └── middleware/# Message processing middleware
+├── services/      # External service integrations
+│   ├── jupiter/   # Jupiter swap functionality
+│   └── solana/    # Solana blockchain interactions
+├── store/         # User data management
+├── config/        # Application configuration
+└── utils/         # Helper functions and utilities
+```
+
+### Key Components
+
+- **Bot Layer**: Telegram interaction handling
+- **Service Layer**: Blockchain and DEX integrations
+- **Store Layer**: In-memory user session management
+- **Config Layer**: Environment-based configuration
+
+## 🔒 Security
+
+### Security Features
+
+- ✅ **Non-custodial**: Users control their private keys
+- ✅ **In-memory Storage**: Keys never persisted to disk
+- ✅ **Auto-deletion**: Sensitive messages deleted after 60s
+- ✅ **No Withdrawals**: Bot cannot initiate transfers
+- ✅ **Input Validation**: All user inputs rigorously validated
+
+### Security Best Practices
+
+```typescript
+// Example: Secure key handling
+class WalletManager {
+  private keys: Map<string, Uint8Array> = new Map();
+  
+  // Keys are stored only in memory
+  async createWallet(userId: string): Promise<string> {
+    const keypair = Keypair.generate();
+    this.keys.set(userId, keypair.secretKey);
+    return keypair.publicKey.toString();
+  }
+  
+  // Automatic cleanup
+  cleanupUser(userId: string) {
+    this.keys.delete(userId);
+  }
+}
+```
+
+## 📊 Example Workflow
+
+1. **Start** → User initiates bot with `/start`
+2. **Fund** → User deposits SOL to generated wallet
+3. **Swap** → User executes trades with `/swap`
+4. **Monitor** → User checks balances with `/balance`
+5. **Export** → User can export keys with `/export`
+
+## 🛠 Development
+
+### Adding New Commands
+
+```typescript
+// src/bot/commands/price.ts
+export const priceCommand = new Composer();
+
+priceCommand.command('prices', async (ctx) => {
+  const [tokenA, tokenB] = ctx.message.text.split(' ').slice(1);
+  const price = await getPrice(tokenA, tokenB);
+  
+  await ctx.replyWithMarkdownV2(
+    `💹 *Current Price*\n` +
+    `${tokenA} → ${tokenB}: $${price}`
+  );
+});
+```
+
+### Testing
+
+```bash
+# Run test suite
+bun test
+
+# Run with coverage
+bun test --coverage
+```
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+- 📖 [Documentation](https://docs.solswap.com)
+- 💬 [Telegram Support Group](https://t.me/solswap_support)
+- 🐛 [Issue Tracker](https://github.com/your-org/solswap-telegram-bot/issues)
+
+---
+
+<div align="center">
+
+**Built with ❤️ using Bun, Solana Web3.js, and Telegraf**
+
+[Report Bug](https://github.com/your-org/solswap-telegram-bot/issues) • [Request Feature](https://github.com/your-org/solswap-telegram-bot/issues)
+
+</div>
 
