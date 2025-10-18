@@ -59,6 +59,7 @@ export class JupiterService {
 					userPublicKey,
 					wrapAndUnwrapSol: true,
 					dynamicComputeUnitLimit: true,
+					asLegacyTransaction: true,
 					prioritizationFeeLamports: {
 						autoMultiplier: 2,
 					},
@@ -82,16 +83,21 @@ export class JupiterService {
 			// Use sendRawTransaction instead of sendTransaction for better ALT handling
 			const signature = await this.connection.sendRawTransaction(transaction.serialize(), {
 				skipPreflight: true, // Skip preflight for ALT issues
-				maxRetries: 3,
+				maxRetries: 5,
 			});
 
 			logger.info("Transaction sent, signature:", signature);
 
-			// Wait for confirmation
-			const confirmation = await this.connection.confirmTransaction(signature, "confirmed");
-			
-			if (confirmation.value.err) {
-				throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
+			// Wait for confirmation with timeout
+			const confirmation = await Promise.race([
+				this.connection.confirmTransaction(signature, "confirmed"),
+				new Promise((_, reject) =>
+					setTimeout(() => reject(new Error("Confirmation timeout")), 60000)
+				),
+			]);
+	   
+			if ((confirmation as any).value.err) {
+				throw new Error(`Transaction failed: ${JSON.stringify((confirmation as any).value.err)}`);
 			}
 
 			return signature;
