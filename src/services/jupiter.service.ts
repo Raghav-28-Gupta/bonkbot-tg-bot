@@ -26,7 +26,7 @@ export class JupiterService {
 				outputMint,
 				amount: amount.toString(),
 				slippageBps: Math.floor(slippage * 100).toString(),
-				asLegacyTransaction: "false", // Request versioned transaction
+				asLegacyTransaction: "true", // Request versioned transaction
 				only: "direct,route", // Use direct routes to avoid ALT issues on devnet
 			});
 
@@ -76,23 +76,26 @@ export class JupiterService {
 			const { swapTransaction } = responseData;
 			
 			const swapTransactionBuf = Buffer.from(swapTransaction, "base64");
-			const transaction = VersionedTransaction.deserialize(swapTransactionBuf);
 
-			transaction.sign([keypair]);
+			// Use Transaction instead of VersionedTransaction for legacy transactions
+			const { Transaction } = await import("@solana/web3.js");
+			const transaction = Transaction.from(swapTransactionBuf);
+
+			transaction.sign(keypair);
 
 			// Use sendRawTransaction instead of sendTransaction for better ALT handling
 			const signature = await this.connection.sendRawTransaction(transaction.serialize(), {
 				skipPreflight: true, // Skip preflight for ALT issues
-				maxRetries: 5,
+				maxRetries: 10,
 			});
 
 			logger.info("Transaction sent, signature:", signature);
 
-			// Wait for confirmation with timeout
+			// Wait for confirmation with timeout (120 seconds for devnet)
 			const confirmation = await Promise.race([
 				this.connection.confirmTransaction(signature, "confirmed"),
 				new Promise((_, reject) =>
-					setTimeout(() => reject(new Error("Confirmation timeout")), 60000)
+					setTimeout(() => reject(new Error("Confirmation timeout")), 120000)
 				),
 			]);
 	   
