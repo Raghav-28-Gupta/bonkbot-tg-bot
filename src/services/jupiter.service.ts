@@ -1,4 +1,4 @@
-import { Connection, Keypair, VersionedTransaction } from "@solana/web3.js";
+import { Connection, Keypair, Transaction, VersionedTransaction } from "@solana/web3.js";
 import type {
 	JupiterQuote,
 	JupiterSwapResponse,
@@ -26,7 +26,7 @@ export class JupiterService {
 				outputMint,
 				amount: amount.toString(),
 				slippageBps: Math.floor(slippage * 100).toString(),
-				asLegacyTransaction: "true", // Request versioned transaction
+				asLegacyTransaction: "true", // Legacy transactions avoid ALTs entirely
 				only: "direct,route", // Use direct routes to avoid ALT issues on devnet
 			});
 
@@ -51,6 +51,8 @@ export class JupiterService {
 		keypair: Keypair
 	): Promise<string> {
 		try {
+			const { blockhash, lastValidBlockHeight } = await this.connection.getLatestBlockhash();
+
 			const swapResponse = await fetch(config.jupiterSwapApi, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
@@ -78,10 +80,10 @@ export class JupiterService {
 			const swapTransactionBuf = Buffer.from(swapTransaction, "base64");
 
 			// Use Transaction instead of VersionedTransaction for legacy transactions
-			const { Transaction } = await import("@solana/web3.js");
 			const transaction = Transaction.from(swapTransactionBuf);
+			transaction.recentBlockhash = blockhash;
+			transaction.sign(keypair); //Legacy transactions use a single signer
 
-			transaction.sign(keypair);
 
 			// Use sendRawTransaction instead of sendTransaction for better ALT handling
 			const signature = await this.connection.sendRawTransaction(transaction.serialize(), {
@@ -93,7 +95,11 @@ export class JupiterService {
 
 			// Wait for confirmation with timeout (120 seconds for devnet)
 			const confirmation = await Promise.race([
-				this.connection.confirmTransaction(signature, "confirmed"),
+				this.connection.confirmTransaction({
+					blockhash,
+					lastValidBlockHeight,
+					signature,
+				}),
 				new Promise((_, reject) =>
 					setTimeout(() => reject(new Error("Confirmation timeout")), 120000)
 				),
