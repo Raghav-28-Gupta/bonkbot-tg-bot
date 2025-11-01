@@ -23,7 +23,7 @@ export class CommandHandlers {
 		const userId = ctx.from!.id;
 		const wallet = this.store.getUserWallet(userId);
 
-		await ctx.replyWithMarkdown(
+		await ctx.replyWithMarkdownV2(
 			`🚀 *Welcome to SolSwap Bot!*\n\n` +
 				`✨ *Your wallet has been created*\n` +
 				`Address: \`${wallet.publicKey}\`\n\n` +
@@ -107,7 +107,7 @@ export class CommandHandlers {
 
 			message += "\n🔄 Updated just now";
 
-			await ctx.replyWithMarkdown(message);
+			await ctx.replyWithMarkdownV2(message);
 		} catch (error) {
 			await ctx.reply("❌ Error fetching prices.");
 		}
@@ -133,7 +133,7 @@ export class CommandHandlers {
 		const userId = ctx.from!.id;
 		const wallet = this.store.getUserWallet(userId);
 
-		await ctx.replyWithMarkdown(
+		await ctx.replyWithMarkdownV2(
 			`📥 *Deposit Address*\n\n` +
 				`Send SOL or SPL tokens to this address:\n\n` +
 				`\`${wallet.publicKey}\`\n\n` +
